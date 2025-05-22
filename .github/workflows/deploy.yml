@@ -73,7 +73,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           source: "prometheus_temp.yml" # Source the modified temporary file
-          target: "~/hiringgo_monitoring/prometheus/prometheus.yml" # Ensure target path is correct
+          target: "~/hiringgo_monitoring/prometheus/" # Copy into the directory, will be named prometheus_temp.yml
 
       - name: Deploy Prometheus monitoring stack
         uses: appleboy/ssh-action@v1.0.0 # Using v1.0.0, ensure this version is suitable or use v1.2.0 as before
@@ -82,7 +82,21 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            echo "--- Initial remote server diagnostics ---"
+            echo "--- Renaming prometheus_temp.yml to prometheus.yml on remote ---"
+            if [ -f ~/hiringgo_monitoring/prometheus/prometheus_temp.yml ]; then
+              mv ~/hiringgo_monitoring/prometheus/prometheus_temp.yml ~/hiringgo_monitoring/prometheus/prometheus.yml
+              echo "File renamed."
+            elif [ -d ~/hiringgo_monitoring/prometheus/prometheus_temp.yml ]; then
+              echo "ERROR: ~/hiringgo_monitoring/prometheus/prometheus_temp.yml is a directory after scp. This should not happen."
+              # Attempt to clean up and signal error
+              rm -rf ~/hiringgo_monitoring/prometheus/prometheus_temp.yml
+              exit 1
+            else
+              echo "ERROR: ~/hiringgo_monitoring/prometheus/prometheus_temp.yml not found after scp. SCP might have failed."
+              exit 1
+            fi
+
+            echo "--- Initial remote server diagnostics (after potential rename) ---"
             echo "Looking for ~/hiringgo_monitoring/prometheus/prometheus.yml:"
             ls -ld ~/hiringgo_monitoring/prometheus/prometheus.yml || echo "~/hiringgo_monitoring/prometheus/prometheus.yml does not exist or ls -ld failed"
             echo "Listing contents of ~/hiringgo_monitoring/prometheus/:"
