@@ -67,5 +67,5 @@ jobs:
             cd ~/hiringgo_monitoring
             # Optional: Docker login if any images in docker-compose.yml are private and not covered by runner's login
             # docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-            docker-compose pull # Pull latest versions of images like prom/prometheus, prom/node-exporter
-            docker-compose up -d --remove-orphans # Start or update services in detached mode
+            docker compose pull # Pull latest versions of images like prom/prometheus, prom/node-exporter
+            docker compose up -d --remove-orphans # Start or update services in detached mode
