@@ -64,8 +64,62 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            # Determine which docker compose command to use
+            COMPOSE_CMD=""
+            if command -v docker &> /dev/null && docker compose version &> /dev/null; then
+              echo "Docker Compose V2 (docker compose) found."
+              COMPOSE_CMD="docker compose"
+            elif command -v docker-compose &> /dev/null; then
+              echo "Docker Compose V1 (docker-compose) found."
+              COMPOSE_CMD="docker-compose"
+            else
+              echo "Neither 'docker compose' nor 'docker-compose' found. Attempting to install docker-compose (V1)..."
+              # Try to get the latest version tag from GitHub API for V1
+              LATEST_COMPOSE_V1_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
+              # Fallback to a known stable version if API call fails or returns empty
+              if [ -z "$LATEST_COMPOSE_V1_VERSION" ]; then
+                echo "Could not fetch latest V1 version tag. Using fallback version 1.29.2."
+                LATEST_COMPOSE_V1_VERSION="1.29.2"
+              fi
+              echo "Downloading Docker Compose V1 version ${LATEST_COMPOSE_V1_VERSION}..."
+              sudo curl -L "https://github.com/docker/compose/releases/download/${LATEST_COMPOSE_V1_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+              if command -v docker-compose &> /dev/null; then
+                echo "docker-compose (V1) installed successfully."
+                COMPOSE_CMD="docker-compose"
+              else
+                echo "Failed to install docker-compose (V1). Please ensure Docker Compose (V1 or V2) is installed manually on the server and in the PATH."
+                exit 1
+              fi
+            fi
+            echo "Using compose command: $COMPOSE_CMD"
+
             cd ~/hiringgo_monitoring
+
+            echo "Verifying prometheus.yml on host before docker-compose operations..."
+            if [ -f "./prometheus/prometheus.yml" ]; then
+              echo "./prometheus/prometheus.yml is a file. OK."
+              ls -l ./prometheus/prometheus.yml
+              echo "First 10 lines of ./prometheus/prometheus.yml:"
+              head -n 10 ./prometheus/prometheus.yml
+            elif [ -d "./prometheus/prometheus.yml" ]; then
+              echo "ERROR: ./prometheus/prometheus.yml is a DIRECTORY on the host, but it should be a FILE."
+              echo "This is likely the cause of the mount error."
+              exit 1
+            else
+              echo "ERROR: ./prometheus/prometheus.yml does NOT EXIST on the host at ./prometheus/prometheus.yml."
+              echo "The scp step might have failed or targeted the wrong path."
+              exit 1
+            fi
+            
             # Optional: Docker login if any images in docker-compose.yml are private and not covered by runner's login
             # docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-            docker compose pull # Pull latest versions of images like prom/prometheus, prom/node-exporter
-            docker compose up -d --remove-orphans # Start or update services in detached mode
+            
+            echo "Pulling latest images..."
+            $COMPOSE_CMD pull
+            
+            echo "Stopping and removing existing containers (if any) defined in docker-compose.yml..."
+            $COMPOSE_CMD down --remove-orphans
+            
+            echo "Starting services..."
+            $COMPOSE_CMD up -d --remove-orphans # Start or update services in detached mode
