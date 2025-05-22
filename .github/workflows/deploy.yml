@@ -26,6 +26,9 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             mkdir -p ~/hiringgo_monitoring/prometheus
+            # Explicitly remove prometheus.yml if it exists (as file or directory)
+            # to prevent scp issues if it was previously a directory.
+            rm -rf ~/hiringgo_monitoring/prometheus/prometheus.yml
 
       - name: Copy docker-compose.yml to remote
         uses: appleboy/scp-action@master 
