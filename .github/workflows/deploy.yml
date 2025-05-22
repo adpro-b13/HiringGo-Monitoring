@@ -41,11 +41,16 @@ jobs:
 
       - name: Substitute secrets in prometheus.yml
         run: |
+          # Ensure prometheus_temp.yml is not a directory from a previous run or error
+          rm -rf prometheus_temp.yml
           # Make a temporary copy to avoid modifying the version in the repository checkout
           cp prometheus.yml prometheus_temp.yml
           sed -i 's|PLACEHOLDER_GRAFANA_REMOTE_WRITE_URL|${{ secrets.GRAFANA_REMOTE_WRITE_URL }}|g' prometheus_temp.yml
           sed -i 's|PLACEHOLDER_GRAFANA_USERNAME|${{ secrets.GRAFANA_USERNAME }}|g' prometheus_temp.yml
           sed -i 's|PLACEHOLDER_GRAFANA_API_KEY|${{ secrets.GRAFANA_API_KEY }}|g' prometheus_temp.yml
+          echo "Checking prometheus_temp.yml on runner:"
+          ls -l prometheus_temp.yml
+          file prometheus_temp.yml
         env:
           GRAFANA_REMOTE_WRITE_URL: ${{ secrets.GRAFANA_REMOTE_WRITE_URL }}
           GRAFANA_USERNAME: ${{ secrets.GRAFANA_USERNAME }}
@@ -67,6 +72,13 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            echo "--- Initial remote server diagnostics ---"
+            echo "Looking for ~/hiringgo_monitoring/prometheus/prometheus.yml:"
+            ls -ld ~/hiringgo_monitoring/prometheus/prometheus.yml || echo "~/hiringgo_monitoring/prometheus/prometheus.yml does not exist or ls -ld failed"
+            echo "Listing contents of ~/hiringgo_monitoring/prometheus/:"
+            ls -la ~/hiringgo_monitoring/prometheus/
+            echo "--- End of initial remote server diagnostics ---"
+
             # Determine which docker compose command to use
             COMPOSE_CMD=""
             if command -v docker &> /dev/null && docker compose version &> /dev/null; then
