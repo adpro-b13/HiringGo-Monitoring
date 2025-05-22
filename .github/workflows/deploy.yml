@@ -25,10 +25,15 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            echo "Preparing remote directory ~/hiringgo_monitoring/prometheus..."
+            # Ensure the base hiringgo_monitoring directory exists
+            mkdir -p ~/hiringgo_monitoring
+            # Remove the prometheus directory and its contents if it exists, then recreate it
+            rm -rf ~/hiringgo_monitoring/prometheus
             mkdir -p ~/hiringgo_monitoring/prometheus
-            # Explicitly remove prometheus.yml if it exists (as file or directory)
-            # to prevent scp issues if it was previously a directory.
-            rm -rf ~/hiringgo_monitoring/prometheus/prometheus.yml
+            echo "Remote directory ~/hiringgo_monitoring/prometheus prepared."
+            echo "Verifying created directory:"
+            ls -ld ~/hiringgo_monitoring/prometheus || echo "Failed to verify ~/hiringgo_monitoring/prometheus"
 
       - name: Copy docker-compose.yml to remote
         uses: appleboy/scp-action@master 
@@ -44,7 +49,12 @@ jobs:
           # Ensure prometheus_temp.yml is not a directory from a previous run or error
           rm -rf prometheus_temp.yml
           # Make a temporary copy to avoid modifying the version in the repository checkout
-          cp prometheus.yml prometheus_temp.yml
+          if [ -f "prometheus.yml" ]; then
+            cp prometheus.yml prometheus_temp.yml
+          else
+            echo "ERROR: prometheus.yml not found in repository checkout!"
+            exit 1
+          fi
           sed -i 's|PLACEHOLDER_GRAFANA_REMOTE_WRITE_URL|${{ secrets.GRAFANA_REMOTE_WRITE_URL }}|g' prometheus_temp.yml
           sed -i 's|PLACEHOLDER_GRAFANA_USERNAME|${{ secrets.GRAFANA_USERNAME }}|g' prometheus_temp.yml
           sed -i 's|PLACEHOLDER_GRAFANA_API_KEY|${{ secrets.GRAFANA_API_KEY }}|g' prometheus_temp.yml
