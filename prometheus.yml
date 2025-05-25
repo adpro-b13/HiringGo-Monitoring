@@ -35,11 +35,11 @@ scrape_configs:
   - job_name: 'remote-user-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['54.253.207.214:8080'] # Specify User Service host and application port
+      - targets: ['13.55.205.168:8081'] # Specify User Service host and application port
 
   - job_name: 'remote-user-service-node-exporter'
     static_configs:
-      - targets: ['54.253.207.214:9100'] # Specify User Service host and Node Exporter port
+      - targets: ['13.55.205.168:9100'] # Specify User Service host and Node Exporter port
 
   # # Placeholder for Course Service
   # - job_name: 'remote-course-service'
@@ -55,11 +55,11 @@ scrape_configs:
   - job_name: 'remote-auth-service'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['13.239.243.60:8080'] # Specify Auth Service host and application port
+      - targets: ['54.252.34.157:8080'] # Specify Auth Service host and application port
 
   - job_name: 'remote-auth-service-node-exporter'
     static_configs:
-      - targets: ['13.239.243.60:9100'] # Specify Auth Service host and Node Exporter port
+      - targets: ['54.252.34.157:9100'] # Specify Auth Service host and Node Exporter port
 
   # To monitor other microservices, add similar job configurations here:
   # - job_name: 'another-service'
