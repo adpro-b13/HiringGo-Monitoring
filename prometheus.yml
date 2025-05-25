@@ -10,18 +10,57 @@ remote_write:
       password: "PLACEHOLDER_GRAFANA_API_KEY" # Placeholder for Grafana Cloud API Key
 
 scrape_configs:
-  - job_name: 'remote-log-service' # Renamed for clarity, was 'log-service'
-    metrics_path: '/actuator/prometheus'
-    static_configs:
-      - targets: ['ec2-54-208-131-6.compute-1.amazonaws.com:8080'] # Target the remote log-service EC2
-
   - job_name: 'local-node-exporter' # Renamed for clarity, was 'node-exporter'
     static_configs:
       - targets: ['node-exporter:9100'] # This targets the node-exporter on the monitoring EC2 via Docker network
 
+  - job_name: 'remote-log-service' # Renamed for clarity, was 'log-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['ec2-54-208-131-6.compute-1.amazonaws.com:8080'] # Target the remote log-service EC2
+  
   - job_name: 'remote-log-service-node-exporter' # New job for node-exporter on the log-service EC2
     static_configs:
       - targets: ['ec2-54-208-131-6.compute-1.amazonaws.com:9100'] # Target node-exporter on the remote log-service EC2
+
+  - job_name: 'remote-recruitment-service' # Renamed for clarity, was 'log-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['hiringultramyb13.duckdns.org:8080'] # Target the remote log-service EC2
+
+  - job_name: 'remote-recruitment-service-node-exporter' # Renamed for clarity, was 'log-service'
+    static_configs:
+      - targets: ['hiringultramyb13.duckdns.org:9100'] # Target the remote log-service EC2
+  
+  # # Placeholder for User Service
+  # - job_name: 'remote-user-service'
+  #   metrics_path: '/actuator/prometheus'
+  #   static_configs:
+  #     - targets: ['PLACEHOLDER_USER_SERVICE_HOST:8080'] # Specify User Service host and application port
+
+  # - job_name: 'remote-user-service-node-exporter'
+  #   static_configs:
+  #     - targets: ['PLACEHOLDER_USER_SERVICE_HOST:9100'] # Specify User Service host and Node Exporter port
+
+  # # Placeholder for Course Service
+  # - job_name: 'remote-course-service'
+  #   metrics_path: '/actuator/prometheus'
+  #   static_configs:
+  #     - targets: ['PLACEHOLDER_COURSE_SERVICE_HOST:8080'] # Specify Course Service host and application port
+
+  # - job_name: 'remote-course-service-node-exporter'
+  #   static_configs:
+  #     - targets: ['PLACEHOLDER_COURSE_SERVICE_HOST:9100'] # Specify Course Service host and Node Exporter port
+
+  # # Placeholder for Auth Service
+  # - job_name: 'remote-auth-service'
+  #   metrics_path: '/actuator/prometheus'
+  #   static_configs:
+  #     - targets: ['PLACEHOLDER_AUTH_SERVICE_HOST:8080'] # Specify Auth Service host and application port
+
+  # - job_name: 'remote-auth-service-node-exporter'
+  #   static_configs:
+  #     - targets: ['PLACEHOLDER_AUTH_SERVICE_HOST:9100'] # Specify Auth Service host and Node Exporter port
 
   # To monitor other microservices, add similar job configurations here:
   # - job_name: 'another-service'
